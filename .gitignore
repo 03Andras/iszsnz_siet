@@ -1,0 +1,20 @@
+# RouterOS backup files
+*.backup
+*.rsc.backup
+
+# Temporary files
+*~
+*.tmp
+*.temp
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
