@@ -1,20 +1,20 @@
 # ===============================================================================
-# RouterOS ISKOLA HÁLÓZAT KONFIGURÁCIÓ
-# Teljes konfiguráció egy másolással történő beállításhoz
+# RouterOS SKOLSKA SIET KONFIGURACIA
+# Uplna konfiguracia pre skolske prostredie
 # ===============================================================================
 
 # ===============================================================================
-# 1. ALAPVETŐ HÁLÓZATI BEÁLLÍTÁSOK
+# 1. ZAKLADNE SIETOVE NASTAVENIA
 # ===============================================================================
 
 # Ether1 - Internet DHCP client
-/ip dhcp-client add interface=ether1 disabled=no comment="Internet kapcsolat"
+/ip dhcp-client add interface=ether1 disabled=no comment="Internet pripojenie"
 
-# Bridge-ek létrehozása
-/interface bridge add name=bridge-teachers comment="Nevelői hálózat (192.168.88.0/24)"
-/interface bridge add name=bridge-students comment="Diák hálózat (192.168.90.0/24)"
+# Bridge-y vytváranie
+/interface bridge add name=bridge-teachers comment="Ucitelska siet (192.168.88.0/24)"
+/interface bridge add name=bridge-students comment="Ziacka siet (192.168.90.0/24)"
 
-# Tanári portok hozzáadása (ether9-16)
+# Ucitelske porty pridanie (ether9-16)
 /interface bridge port add bridge=bridge-teachers interface=ether9
 /interface bridge port add bridge=bridge-teachers interface=ether10
 /interface bridge port add bridge=bridge-teachers interface=ether11
@@ -24,7 +24,7 @@
 /interface bridge port add bridge=bridge-teachers interface=ether15
 /interface bridge port add bridge=bridge-teachers interface=ether16
 
-# Diák portok hozzáadása (ether17-24)
+# Ziacke porty pridanie (ether17-24)
 /interface bridge port add bridge=bridge-students interface=ether17
 /interface bridge port add bridge=bridge-students interface=ether18
 /interface bridge port add bridge=bridge-students interface=ether19
@@ -34,186 +34,186 @@
 /interface bridge port add bridge=bridge-students interface=ether23
 /interface bridge port add bridge=bridge-students interface=ether24
 
-# IP címek hozzáadása a bridge-ekhez
-/ip address add address=192.168.88.1/24 interface=bridge-teachers comment="Tanári gateway"
-/ip address add address=192.168.90.1/24 interface=bridge-students comment="Diák gateway"
+# IP adresy pridanie k bridge-om
+/ip address add address=192.168.88.1/24 interface=bridge-teachers comment="Ucitelsky gateway"
+/ip address add address=192.168.90.1/24 interface=bridge-students comment="Ziacky gateway"
 
-# Bridge IP firewall engedélyezése (Layer3 szűréshez)
+# Bridge IP firewall povolenie (Layer3 filtrovanie)
 /interface bridge settings set use-ip-firewall=yes
 
 # ===============================================================================
-# 2. DHCP KONFIGURÁCIÓ
+# 2. DHCP KONFIGURACIA
 # ===============================================================================
 
-# DHCP pool-ok létrehozása
+# DHCP pool-y vytvorenie
 /ip pool add name=teachers-pool ranges=192.168.88.10-192.168.88.200
 /ip pool add name=students-pool ranges=192.168.90.10-192.168.90.200
 
-# DHCP szerverek létrehozása
+# DHCP servery vytvorenie
 /ip dhcp-server add name=dhcp-teachers interface=bridge-teachers lease-time=4h address-pool=teachers-pool disabled=no
 /ip dhcp-server add name=dhcp-students interface=bridge-students lease-time=2h address-pool=students-pool disabled=no
 
-# DHCP hálózatok konfigurálása
-/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1 comment="Tanári DHCP"
-/ip dhcp-server network add address=192.168.90.0/24 gateway=192.168.90.1 dns-server=192.168.90.1 comment="Diák DHCP"
+# DHCP siete konfigurovanie
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1 dns-server=192.168.88.1 comment="Ucitelsky DHCP"
+/ip dhcp-server network add address=192.168.90.0/24 gateway=192.168.90.1 dns-server=192.168.90.1 comment="Ziacky DHCP"
 
 # ===============================================================================
-# 3. DNS KONFIGURÁCIÓ (Szűréssel)
+# 3. DNS KONFIGURACIA (S filtrovanim)
 # ===============================================================================
 
-# Biztonságos DNS szerverek (OpenDNS Family Shield + Cloudflare Family)
+# Bezpecne DNS servery (OpenDNS Family Shield + Cloudflare Family)
 /ip dns set servers=208.67.222.123,208.67.220.123,1.1.1.3,1.0.0.3 allow-remote-requests=yes cache-size=4096KiB
 
 # ===============================================================================
-# 4. LAYER7 PROTOKOLL FELISMERÉS (Tartalomszűrés)
+# 4. LAYER7 PROTOKOL ROZOZNANIE (Filtrovanie obsahu)
 # ===============================================================================
 
-# TikTok blokkolása
+# TikTok blokovanie
 /ip firewall layer7-protocol add name=tiktok regexp="^.*(tiktok|musically).*"
 
-# Pornográf tartalom blokkolása (átfogó lista)
+# Pornograficky obsah blokovanie (obsirny zoznam)
 /ip firewall layer7-protocol add name=pornography regexp="^.*(porn|sex|xxx|adult|xvideos|xnxx|redtube|hentai|erotica|chaturbate|cam4|livejasmin|pornhub|youporn|brazzers|bangbros|reality|naughty|sexy|milf|teen|fetish|escort).*"
 
-# Torrent és P2P protokollok blokkolása
+# Torrent a P2P protokoly blokovanie
 /ip firewall layer7-protocol add name=bittorrent regexp="^(\\x13BitTorrent protocol|azver\\x01|get /scrape\\?info_hash=)"
 /ip firewall layer7-protocol add name=edonkey regexp="^[\\x00\\x01][\\x00-\\xFF]{3}[\\x01\\x02\\x05\\x14\\x15\\x16\\x18\\x19\\x1a\\x1b\\x1c\\x20\\x21\\x32\\x33\\x34\\x35\\x36\\x38\\x40\\x41\\x42\\x43\\x46\\x47\\x4a\\x4b\\x4c\\x4d\\x4e\\x4f\\x50\\x51\\x52\\x53\\x54\\x55\\x56\\x57\\x58]"
 
-# Streaming szolgáltatások (YouTube, Netflix, stb.)
+# Streaming sluzby (YouTube, Netflix, atd.)
 /ip firewall layer7-protocol add name=youtube regexp="^.*(youtube|youtu\\.be|googlevideo).*"
 /ip firewall layer7-protocol add name=video-streaming regexp="^.*(netflix|hulu|twitch|vimeo|dailymotion|facebook.*video).*"
 
-# Nagy fájl letöltések
+# Velke subory stiahnutie
 /ip firewall layer7-protocol add name=large-downloads regexp="^.*(\\.(zip|rar|7z|tar|gz|iso|exe|msi|dmg|pkg|deb|rpm)\\?|/download/)"
 
 # ===============================================================================
-# 5. CÍMLISTÁK LÉTREHOZÁSA (Oktatási és egyéb célok)
+# 5. ADRESNE ZOZNAMY VYTVORENIE (Vzdelacie a ostatne ucely)
 # ===============================================================================
 
-# Oktatási oldalak (magas prioritás)
+# Vzdelacie stranky (vysoka priorita)
 /ip firewall address-list add address=edupage.org list=edu-priority comment="EduPage"
 /ip firewall address-list add address=wikipedia.org list=edu-priority comment="Wikipedia"
 /ip firewall address-list add address=wiktionary.org list=edu-priority comment="Wiktionary"
-/ip firewall address-list add address=google.com list=edu-priority comment="Google keresés"
+/ip firewall address-list add address=google.com list=edu-priority comment="Google vyhladavanie"
 /ip firewall address-list add address=google.hu list=edu-priority comment="Google Magyar"
 /ip firewall address-list add address=khanacademy.org list=edu-priority comment="Khan Academy"
 /ip firewall address-list add address=coursera.org list=edu-priority comment="Coursera"
 /ip firewall address-list add address=edx.org list=edu-priority comment="EdX"
 /ip firewall address-list add address=duolingo.com list=edu-priority comment="Duolingo"
 
-# Normál webböngészés (közepes prioritás)
+# Normalne webove prehliadanie (stredna priorita)
 /ip firewall address-list add address=github.com list=normal-browsing comment="GitHub"
 /ip firewall address-list add address=stackoverflow.com list=normal-browsing comment="Stack Overflow"
 /ip firewall address-list add address=microsoft.com list=normal-browsing comment="Microsoft"
 /ip firewall address-list add address=office.com list=normal-browsing comment="Office 365"
 
 # ===============================================================================
-# 6. TŰZFAL SZABÁLYOK (Biztonság és szűrés)
+# 6. FIREWALL PRAVIDLA (Bezpecnost a filtrovanie)
 # ===============================================================================
 
-# Diákok ne lássák egymást (izolálás)
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 dst-address=192.168.90.0/24 action=drop comment="Diák hálózat izolálás"
+# Ziaci sa nemozu vidiet navzajom (izolacia)
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 dst-address=192.168.90.0/24 action=drop comment="Ziacka siet izolacia"
 
-# TikTok teljes blokkolása diákoknak
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=tiktok action=drop comment="TikTok blokkolás"
+# TikTok uplne blokovanie pre ziakov
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=tiktok action=drop comment="TikTok blokovanie"
 
-# Pornográf tartalom blokkolása diákoknak
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=pornography action=drop comment="Pornográfia blokkolás"
+# Pornograficky obsah blokovanie pre ziakov
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=pornography action=drop comment="Pornografia blokovanie"
 
-# Torrent és P2P blokkolása diákoknak
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=bittorrent action=drop comment="BitTorrent blokkolás"
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=edonkey action=drop comment="eDonkey blokkolás"
+# Torrent a P2P blokovanie pre ziakov
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=bittorrent action=drop comment="BitTorrent blokovanie"
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=edonkey action=drop comment="eDonkey blokovanie"
 
-# Nehéz felhasználók automatikus ledobása (kapcsolat limitek)
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 connection-limit=50,32 action=drop comment="Túl sok kapcsolat - auto kick"
+# Tazki pouzivatelia automaticke odpojenie (pripojenie limity)
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 connection-limit=50,32 action=drop comment="Prilis vela pripojeni - auto kick"
 
-# Nagy fájl letöltések korlátozása diákoknak
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=large-downloads connection-bytes=104857600-0 action=drop comment="Nagy fájl letöltés megállítása 100MB felett"
+# Velke subory stiahnutie obmedzenie pre ziakov
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=large-downloads connection-bytes=104857600-0 action=drop comment="Velky subor zastavenie nad 100MB"
 
 # ===============================================================================
-# 7. QoS ÉS TRAFFIC SHAPING (Forgalom alakítás)
+# 7. QoS A TRAFFIC SHAPING (Upravenie prevadzky)
 # ===============================================================================
 
-# Queue fa struktúra létrehozása
+# Queue strom struktura vytvorenie
 /queue type add name=pcq-upload-default kind=pcq pcq-rate=0 pcq-limit=50 pcq-classifier=src-address
 /queue type add name=pcq-download-default kind=pcq pcq-rate=0 pcq-limit=50 pcq-classifier=dst-address
 
-# Föő queue-k
+# Hlavne queue-y
 /queue tree add name="1-Internet-Out" parent=ether1 packet-mark="" limit-at=0 max-limit=100M priority=1 queue=default
 /queue tree add name="1-Internet-In" parent=global packet-mark="" limit-at=0 max-limit=100M priority=1 queue=default
 
-# Tanári hálózat (legmagasabb prioritás - 60% sávszélesség garantált)
+# Ucitelska siet (najvyssia priorita - 60% sirka pasma garantovana)
 /queue tree add name="2-Teachers-Out" parent="1-Internet-Out" packet-mark=teachers-out limit-at=60M max-limit=100M priority=1 queue=default
 /queue tree add name="2-Teachers-In" parent="1-Internet-In" packet-mark=teachers-in limit-at=60M max-limit=100M priority=1 queue=default
 
-# Diák hálózat - Oktatási tartalom (magas prioritás)
+# Ziacka siet - Vzdelavacie obsah (vysoka priorita)
 /queue tree add name="2-Students-Edu-Out" parent="1-Internet-Out" packet-mark=students-edu-out limit-at=20M max-limit=40M priority=2 queue=default
 /queue tree add name="2-Students-Edu-In" parent="1-Internet-In" packet-mark=students-edu-in limit-at=20M max-limit=40M priority=2 queue=default
 
-# Diák hálózat - Normál böngészés (közepes prioritás)
+# Ziacka siet - Normalne prehliadanie (stredna priorita)
 /queue tree add name="2-Students-Normal-Out" parent="1-Internet-Out" packet-mark=students-normal-out limit-at=10M max-limit=30M priority=4 queue=pcq-upload-default
 /queue tree add name="2-Students-Normal-In" parent="1-Internet-In" packet-mark=students-normal-in limit-at=10M max-limit=30M priority=4 queue=pcq-download-default
 
-# Diák hálózat - Video streaming (alacsony prioritás)
+# Ziacka siet - Video streaming (nizka priorita)
 /queue tree add name="2-Students-Video-Out" parent="1-Internet-Out" packet-mark=students-video-out limit-at=2M max-limit=15M priority=7 queue=pcq-upload-default
 /queue tree add name="2-Students-Video-In" parent="1-Internet-In" packet-mark=students-video-in limit-at=2M max-limit=15M priority=7 queue=pcq-download-default
 
 # ===============================================================================
-# 8. PACKET MARKING (Forgalom jelölése QoS-hez)
+# 8. PACKET MARKING (Prevadzka oznacenie pre QoS)
 # ===============================================================================
 
-# Tanári forgalom jelölése
-/ip firewall mangle add chain=prerouting src-address=192.168.88.0/24 action=mark-packet new-packet-mark=teachers-out passthrough=yes comment="Tanári kimenő"
-/ip firewall mangle add chain=prerouting dst-address=192.168.88.0/24 action=mark-packet new-packet-mark=teachers-in passthrough=yes comment="Tanári bejövő"
+# Ucitelska prevadzka oznacenie
+/ip firewall mangle add chain=prerouting src-address=192.168.88.0/24 action=mark-packet new-packet-mark=teachers-out passthrough=yes comment="Ucitelsky odchadzajuci"
+/ip firewall mangle add chain=prerouting dst-address=192.168.88.0/24 action=mark-packet new-packet-mark=teachers-in passthrough=yes comment="Ucitelsky prichadzajuci"
 
-# Diák oktatási forgalom jelölése
-/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 dst-address-list=edu-priority action=mark-packet new-packet-mark=students-edu-out passthrough=yes comment="Diák oktatási kimenő"
-/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 src-address-list=edu-priority action=mark-packet new-packet-mark=students-edu-in passthrough=yes comment="Diák oktatási bejövő"
+# Ziak vzdelavacie prevadzka oznacenie
+/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 dst-address-list=edu-priority action=mark-packet new-packet-mark=students-edu-out passthrough=yes comment="Ziak vzdelavacie odchadzajuci"
+/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 src-address-list=edu-priority action=mark-packet new-packet-mark=students-edu-in passthrough=yes comment="Ziak vzdelavacie prichadzajuci"
 
-# Diák video streaming forgalom jelölése
-/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 layer7-protocol=youtube action=mark-packet new-packet-mark=students-video-out passthrough=yes comment="Diák videó kimenő"
-/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 layer7-protocol=youtube action=mark-packet new-packet-mark=students-video-in passthrough=yes comment="Diák videó bejövő"
-/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 layer7-protocol=video-streaming action=mark-packet new-packet-mark=students-video-out passthrough=yes comment="Diák streaming kimenő"
-/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 layer7-protocol=video-streaming action=mark-packet new-packet-mark=students-video-in passthrough=yes comment="Diák streaming bejövő"
+# Ziak video streaming prevadzka oznacenie
+/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 layer7-protocol=youtube action=mark-packet new-packet-mark=students-video-out passthrough=yes comment="Ziak video odchadzajuci"
+/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 layer7-protocol=youtube action=mark-packet new-packet-mark=students-video-in passthrough=yes comment="Ziak video prichadzajuci"
+/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 layer7-protocol=video-streaming action=mark-packet new-packet-mark=students-video-out passthrough=yes comment="Ziak streaming odchadzajuci"
+/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 layer7-protocol=video-streaming action=mark-packet new-packet-mark=students-video-in passthrough=yes comment="Ziak streaming prichadzajuci"
 
-# Diák normál böngészés (minden más)
-/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 action=mark-packet new-packet-mark=students-normal-out passthrough=yes comment="Diák normál kimenő"
-/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 action=mark-packet new-packet-mark=students-normal-in passthrough=yes comment="Diák normál bejövő"
+# Ziak normalne prehliadanie (vsetko ostatne)
+/ip firewall mangle add chain=prerouting src-address=192.168.90.0/24 action=mark-packet new-packet-mark=students-normal-out passthrough=yes comment="Ziak normalne odchadzajuci"
+/ip firewall mangle add chain=prerouting dst-address=192.168.90.0/24 action=mark-packet new-packet-mark=students-normal-in passthrough=yes comment="Ziak normalne prichadzajuci"
 
 # ===============================================================================
-# 9. CONNECTION TRACKING ÉS LIMITEK
+# 9. CONNECTION TRACKING A LIMITY
 # ===============================================================================
 
-# Connection tracking timeout-ok csökkentése (gyorsabb megszakítás)
+# Connection tracking timeout-y znizenie (rychlejsie prerusenie)
 /ip firewall connection tracking set tcp-established-timeout=1h tcp-close-timeout=10s udp-timeout=30s
 
 # ===============================================================================
-# 10. NAT KONFIGURÁCIÓ (Internet elérés)
+# 10. NAT KONFIGURACIA (Internet pristup)
 # ===============================================================================
 
-# Masquerade a WAN interfészre
+# Masquerade na WAN rozhranie
 /ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade comment="Internet NAT"
 
 # ===============================================================================
-# 11. EGYÉB BIZTONSÁGI BEÁLLÍTÁSOK
+# 11. OSTATNE BEZPECNOSTNE NASTAVENIA
 # ===============================================================================
 
-# MAC server csak LAN-ról elérhető
+# MAC server len z LAN-u dostupny
 /tool mac-server set allowed-interface-list=none
 /tool mac-server mac-winbox set allowed-interface-list=none
 
-# Neighbor discovery csak helyi hálózatokon
+# Neighbor discovery len na lokalnych sietiach
 /ip neighbor discovery-settings set discover-interface-list=none
 
 # ===============================================================================
-# 12. RENDSZER BEÁLLÍTÁSOK
+# 12. SYSTEMOVE NASTAVENIA
 # ===============================================================================
 
-# Időzóna beállítása
+# Casove pasmo nastavenie
 /system clock set time-zone-name=Europe/Budapest
 
-# NTP szerver
+# NTP server
 /system ntp client set enabled=yes
 
 # ===============================================================================
-# KONFIGURÁCIÓ VÉGE
+# KONFIGURACIA KONIEC
 # ===============================================================================

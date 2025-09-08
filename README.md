@@ -1,230 +1,230 @@
-# RouterOS Iskola Hálózat Konfiguráció
+# RouterOS Skolska Siet Konfiguracia
 
-Ez a repository tartalmazza a RouterOS/MikroTik switch-ek konfigurációját egy iskola/kollégium hálózati infrastruktúrájához.
+Tento repository obsahuje konfiguraciu RouterOS/MikroTik switch-ov pre skolsku/internátnu sietovu infrastrukturu.
 
-## 🎯 Célok és Követelmények
+## 🎯 Ciele a Poziadavky
 
-### Hálózati Struktúra
-- **ether1**: Internet kapcsolat (DHCP client)
-- **ether9-16**: Nevelői hálózat (192.168.88.0/24) - magas prioritás
-- **ether17-24**: Diák hálózat (192.168.90.0/24) - korlátozott hozzáférés
+### Sietova Struktura
+- **ether1**: Internet pripojenie (DHCP client)
+- **ether9-16**: Ucitelska siet (192.168.88.0/24) - vysoka priorita
+- **ether17-24**: Ziacka siet (192.168.90.0/24) - obmedzeny pristup
 
-### Prioritási Rendszer
-1. **Legmagasabb prioritás**: Nevelői hálózat (mindig garantált internet)
-2. **Magas prioritás**: Oktatási tartalom (EduPage, Wikipedia, Google keresés)
-3. **Közepes prioritás**: Normál webböngészés
-4. **Alacsony prioritás**: Video streaming (YouTube, Netflix)
+### Prioritny System
+1. **Najvyssia priorita**: Ucitelska siet (vzdy garantovany internet)
+2. **Vysoka priorita**: Vzdelavaci obsah (EduPage, Wikipedia, Google vyhladavanie)
+3. **Stredna priorita**: Normalne webove prehliadanie
+4. **Nizka priorita**: Video streaming (YouTube, Netflix)
 
-### Tartalomszűrés és Korlátozások
-- ✅ **Engedélyezett magas prioritással**: EduPage, Wikipedia, Google keresés, oktatási oldalak
-- ⚠️ **Korlátozott**: YouTube, Facebook, video streaming szolgáltatások
-- ❌ **Tiltott**: TikTok, pornográf tartalom, torrent/P2P, nagy fájl letöltések
+### Filtrovanie Obsahu a Obmedzenia
+- ✅ **Povolene s vysokou prioritou**: EduPage, Wikipedia, Google vyhladavanie, vzdelacie stranky
+- ⚠️ **Obmedzene**: YouTube, Facebook, video streaming sluzby
+- ❌ **Zakazane**: TikTok, pornograficky obsah, torrent/P2P, velke subory na stiahnutie
 
-## 📁 Fájlok
+## 📁 Subory
 
 ### `config.txt`
-Részletesen kommentezett konfiguráció oktatási célokra és megértéshez.
+Podrobne komentovana konfiguracia pre vzdelacie ucely a pochopenie.
 
 ### `script.txt`
-Közvetlen importálásra alkalmas RouterOS script - ez a **fő telepítési fájl**.
+Priamo importovatelny RouterOS script - toto je **hlavny instalacny subor**.
 
 ### `README.md`
-Ez a dokumentum - telepítési útmutató és használati leírás.
+Tento dokument - instalacny navod a popis pouzitia.
 
-## 🚀 Telepítési Útmutató
+## 🚀 Instalacny Navod
 
-### 1. Előkészületek
+### 1. Priprava
 
-**FONTOS**: Mentse el a jelenlegi konfigurációt backup-ként!
+**DOLEZITE**: Ulozenie aktualnej konfiguracie ako backup!
 
 ```bash
-# RouterOS terminálban
+# RouterOS terminal
 /export file=backup-$(date +%Y%m%d)
 ```
 
-### 2. Telepítés Módszerek
+### 2. Metody Instalacie
 
-#### A) WinBox-szal (Ajánlott)
-1. Nyissa meg a WinBox-ot
-2. Csatlakozzon a RouterOS eszközhöz
-3. Menü: `Files` → Húzza be a `script.txt` fájlt
-4. Menü: `New Terminal`
-5. Írja be: `/import script.txt`
-6. Nyomja meg az Enter-t
+#### A) S WinBox-om (Odporucane)
+1. Otvorte WinBox
+2. Pripojte sa k RouterOS zariadeniu
+3. Menu: `Files` → Pretiahnite `script.txt` subor
+4. Menu: `New Terminal`
+5. Napiste: `/import script.txt`
+6. Stlacte Enter
 
-#### B) SSH/Telnet-tel
-1. Csatlakozzon SSH-val vagy Telnet-tel a RouterOS-hez
-2. Másolja be a `script.txt` tartalmát részletekben, vagy
-3. Töltse fel a fájlt és importálja: `/import script.txt`
+#### B) SSH/Telnet
+1. Pripojte sa SSH alebo Telnet-om k RouterOS
+2. Skopirujte obsah `script.txt` po castiach, alebo
+3. Nahrajte subor a importujte: `/import script.txt`
 
-#### C) Web interfész
-1. Lépjen be a RouterOS web felületére
-2. Menü: `Files` → Töltse fel a `script.txt` fájlt
-3. Menü: `Terminal` → Írja be: `/import script.txt`
+#### C) Web rozhranie
+1. Prihlaste sa do RouterOS web rozhrania
+2. Menu: `Files` → Nahrajte `script.txt` subor
+3. Menu: `Terminal` → Napiste: `/import script.txt`
 
-### 3. Telepítés Ellenőrzése
+### 3. Overenie Instalacie
 
-A telepítés után ellenőrizze:
+Po instalacii overte:
 
 ```bash
-# Hálózati interfészek
+# Sietove rozhrania
 /interface bridge print
 
-# DHCP szerverek
+# DHCP servery
 /ip dhcp-server print
 
-# Tűzfal szabályok
+# Firewall pravidla
 /ip firewall filter print
 
-# QoS beállítások
+# QoS nastavenia
 /queue tree print
 
-# DNS beállítások
+# DNS nastavenia
 /ip dns print
 ```
 
-## ⚙️ Konfiguráció Részletei
+## ⚙️ Detaily Konfiguracie
 
-### Hálózati Beállítások
-- **Tanári hálózat**: 192.168.88.0/24 (gateway: 192.168.88.1)
-- **Diák hálózat**: 192.168.90.0/24 (gateway: 192.168.90.1)
-- **DNS szerverek**: OpenDNS Family Shield + Cloudflare Family
-- **DHCP lease idő**: Tanárok 4 óra, diákok 2 óra
+### Sietove Nastavenia
+- **Ucitelska siet**: 192.168.88.0/24 (gateway: 192.168.88.1)
+- **Ziacka siet**: 192.168.90.0/24 (gateway: 192.168.90.1)
+- **DNS servery**: OpenDNS Family Shield + Cloudflare Family
+- **DHCP lease cas**: Ucitelia 4 hodiny, ziaci 2 hodiny
 
-### Sávszélesség Elosztás
-- **Tanárok**: 60M garantált, 100M maximum
-- **Diák oktatási**: 20M garantált, 40M maximum
-- **Diák normál**: 10M garantált, 30M maximum
-- **Diák videó**: 2M garantált, 15M maximum
+### Rozdelenie Sirky Pasma
+- **Ucitelia**: 60M garantovane, 100M maximum
+- **Ziak vzdelavacie**: 20M garantovane, 40M maximum
+- **Ziak normalne**: 10M garantovane, 30M maximum
+- **Ziak video**: 2M garantovane, 15M maximum
 
-### Biztonsági Funkciók
-- Diákok izolálása egymástól
-- Automatikus lekapcsolás túl sok kapcsolat esetén (50+ egyidejű kapcsolat)
-- Nagy fájl letöltések megszakítása 100MB felett
-- Komprehenzív tartalomszűrés
+### Bezpecnostne Funkcie
+- Izolovanie ziakov medzi sebou
+- Automaticke odpojenie pri prilis velkej nagate pripojeni (50+ suctasnych pripojeni)
+- Prerusenie velkych subtorov nad 100MB
+- Komplexne filtrovanie obsahu
 
-## 🛠️ Személyre Szabás
+## 🛠️ Prispôsobenie
 
-### Sávszélesség Módosítása
-A `script.txt` fájlban keresse meg a Queue Tree részlegét és módosítsa a limit értékeket:
+### Modifikacia Sirky Pasma
+V `script.txt` subore najdite Queue Tree cast a upravte limit hodnoty:
 
 ```bash
-# Példa: Tanári sávszélesség növelése 80M-re
+# Priklad: Zvysenie ucitelskej sirky pasma na 80M
 /queue tree add name="2-Teachers-Out" parent="1-Internet-Out" packet-mark=teachers-out limit-at=80M max-limit=100M priority=1 queue=default
 ```
 
-### Új Oktatási Oldalak Hozzáadása
+### Pridanie Novych Vzdelacich Stranok
 ```bash
-# Új címek hozzáadása az edu-priority listához
+# Pridanie novych adries do edu-priority zoznamu
 /ip firewall address-list add address=codecademy.com list=edu-priority comment="Codecademy"
 /ip firewall address-list add address=udemy.com list=edu-priority comment="Udemy"
 ```
 
-### További Tiltott Oldalak
+### Dalsie Zakazane Stranky
 ```bash
-# Új Layer7 protokoll hozzáadása
+# Pridanie noveho Layer7 protokolu
 /ip firewall layer7-protocol add name=gaming regexp="^.*(steam|battle\\.net|riot|epicgames).*$"
-/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=gaming action=drop comment="Gaming blokkolás"
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=gaming action=drop comment="Blokovanie hier"
 ```
 
-## 📊 Monitorozás és Hibakeresés
+## 📊 Monitorovanie a Riesenie Problemov
 
-### Forgalom Monitorozása
+### Monitorovanie Prevadzky
 ```bash
-# Queue statisztikák
+# Queue statistiky
 /queue tree print stats
 
-# Aktív kapcsolatok
+# Aktivne pripojenia
 /ip firewall connection print count-only
 
-# Legtöbb sávszélességet használó IP-k
+# IP adresy s najvacsou nagatou sirky pasma
 /tool torch interface=bridge-students
 ```
 
-### Gyakori Problémák
+### Caste Problemy
 
-#### 1. Nincs internet a tanároknak
+#### 1. Ucitelia nemaju internet
 ```bash
-# Ellenőrizze a DHCP client-et
+# Overenie DHCP client-a
 /ip dhcp-client print
 
-# Ellenőrizze a NAT szabályt
+# Overenie NAT pravidla
 /ip firewall nat print
 ```
 
-#### 2. Diákok nem kapnak IP címet
+#### 2. Ziaci nedostanu IP adresu
 ```bash
-# DHCP szerver állapot
+# Stav DHCP servera
 /ip dhcp-server print
 /ip dhcp-server lease print
 ```
 
-#### 3. Tartalomszűrés nem működik
+#### 3. Filtrovanie obsahu nefunguje
 ```bash
-# Layer7 protokollok állapota
+# Stav Layer7 protokolov
 /ip firewall layer7-protocol print
 
-# Tűzfal szabályok ellenőrzése
+# Overenie firewall pravidiel
 /ip firewall filter print stats
 ```
 
-## 🔧 Karbantartás
+## 🔧 Udrzba
 
-### Napi Feladatok
-- Forgalom statisztikák ellenőrzése
-- Rendellenes aktivitás keresése
-- DHCP lease-ek áttekintése
+### Denne Ulohy
+- Overenie statistik prevadzky
+- Hladanie neobycajnej aktivity
+- Prehladanie DHCP lease-ov
 
-### Heti Feladatok
-- Konfiguráció backup készítése
-- Firmware frissítés ellenőrzése
-- Naplók áttekintése
+### Tyzdenove Ulohy
+- Vytvorenie backup konfiguracie
+- Overenie aktualizacie firmware
+- Prehladanie logov
 
-### Havi Feladatok
-- Teljes konfiguráció felülvizsgálata
-- Sávszélesség használat elemzése
-- Biztonsági beállítások frissítése
+### Mesacne Ulohy
+- Uplna revzia konfiguracie
+- Analyza pouzitia sirky pasma
+- Aktualizacia bezpecnostnych nastaveni
 
-## 📞 Támogatás
+## 📞 Podpora
 
-### Logok Ellenőrzése
+### Overenie Logov
 ```bash
-# Rendszer logok
+# Systemove logy
 /log print where topics~"system"
 
-# Tűzfal logok (ha engedélyezve)
+# Firewall logy (ak su povolene)
 /log print where topics~"firewall"
 ```
 
-### Konfiguráció Visszaállítása
-Ha problémába ütközik, visszaállíthatja a korábbi backup-ot:
+### Obnovenie Konfiguracie
+Ak narazite na problem, mozete obnovit predchadzajuci backup:
 
 ```bash
-# Backup importálása
+# Import backup-u
 /import backup-20231201.rsc
 
-# Vagy teljes reset (VESZÉLYES!)
+# Alebo uplny reset (NEBEZPECNE!)
 /system reset-configuration no-defaults=yes skip-backup=yes
 ```
 
-## ⚠️ Figyelmeztetések
+## ⚠️ Upozornenia
 
-1. **Mindig készítsen backup-ot** a módosítások előtt
-2. **Tesztelje** a konfigurációt kis csoporttal először
-3. **Ne módosítsa** a NAT szabályokat, ha nem biztos benne
-4. **Figyelje** a rendszer erőforrásokat (CPU, memória)
+1. **Vzdy vytvorte backup** pred zmenami
+2. **Testujte** konfiguraciu najprv s malou skupinou
+3. **Neupravujte** NAT pravidla, ak si nie ste isty
+4. **Sledujte** systemove zdroje (CPU, pamat)
 
 ## 📝 Changelog
 
 ### v1.0 (2023-12-01)
-- Alapvető hálózati konfiguráció
-- Tartalomszűrés implementálása
-- QoS és traffic shaping
-- Biztonsági beállítások
+- Zakladna sietova konfiguracia
+- Implementacia filtrovania obsahu
+- QoS a traffic shaping
+- Bezpecnostne nastavenia
 
 ---
 
-**Készítette**: RouterOS Hálózati Konfiguráció  
-**Utolsó módosítás**: 2023-12-01  
-**Verzió**: 1.0  
-**Kompatibilitás**: RouterOS 7.x
+**Vytvoril**: RouterOS Sietova Konfiguracia  
+**Posledna zmena**: 2023-12-01  
+**Verzia**: 1.0  
+**Kompatibilita**: RouterOS 7.x
