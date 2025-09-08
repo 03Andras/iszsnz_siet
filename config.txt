@@ -1,0 +1,79 @@
+# Ether1 - Internet DHCP client
+/ip dhcp-client add interface=ether1 disabled=no
+
+# Bridge for teachers
+/interface bridge add name=bridge-teachers comment="Nevelői hálózat"
+/interface bridge port add bridge=bridge-teachers interface=ether9
+/interface bridge port add bridge=bridge-teachers interface=ether10
+/interface bridge port add bridge=bridge-teachers interface=ether11
+/interface bridge port add bridge=bridge-teachers interface=ether12
+/interface bridge port add bridge=bridge-teachers interface=ether13
+/interface bridge port add bridge=bridge-teachers interface=ether14
+/interface bridge port add bridge=bridge-teachers interface=ether15
+/interface bridge port add bridge=bridge-teachers interface=ether16
+
+# Bridge for students
+/interface bridge add name=bridge-students comment="Diák hálózat"
+/interface bridge port add bridge=bridge-students interface=ether17
+/interface bridge port add bridge=bridge-students interface=ether18
+/interface bridge port add bridge=bridge-students interface=ether19
+/interface bridge port add bridge=bridge-students interface=ether20
+/interface bridge port add bridge=bridge-students interface=ether21
+/interface bridge port add bridge=bridge-students interface=ether22
+/interface bridge port add bridge=bridge-students interface=ether23
+/interface bridge port add bridge=bridge-students interface=ether24
+
+# Assign IP addresses to bridges
+/ip address add address=192.168.88.1/24 interface=bridge-teachers comment="Tanári IP"
+/ip address add address=192.168.90.1/24 interface=bridge-students comment="Diák IP"
+
+# DHCP pools and servers
+/ip pool add name=teachers-pool ranges=192.168.88.10-192.168.88.200
+/ip pool add name=students-pool ranges=192.168.90.10-192.168.90.200
+
+/ip dhcp-server add name=dhcp-teachers interface=bridge-teachers lease-time=1h address-pool=teachers-pool
+/ip dhcp-server add name=dhcp-students interface=bridge-students lease-time=1h address-pool=students-pool
+
+/ip dhcp-server network add address=192.168.88.0/24 gateway=192.168.88.1
+/ip dhcp-server network add address=192.168.90.0/24 gateway=192.168.90.1
+
+# Enable IP firewall for bridges so Layer2 traffic is filtered
+/interface bridge settings set use-ip-firewall=yes
+
+# Students cannot see each other
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 dst-address=192.168.90.0/24 action=drop comment="Diákok ne lássák egymást"
+
+# Layer7 filters for TikTok and porn sites (minta)
+/ip firewall layer7-protocol add name=tiktok regexp="tiktok.com"
+/ip firewall layer7-protocol add name=porn regexp="porn|sex|xvideos|xnxx|redtube|hentai|erotica|chaturbate|cam4|livejasmin|pornhub|youporn"
+
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=tiktok action=drop comment="TikTok tiltás"
+/ip firewall filter add chain=forward src-address=192.168.90.0/24 layer7-protocol=porn action=drop comment="Pornó tiltás"
+
+# DNS szűrés - OpenDNS használata (opcionális, ha van DNS forward)
+/ip dns set servers=208.67.222.123,208.67.220.123
+
+# Queue: prioritás, sávszél, először nevelői, Wikipedia, Edupage, végül YouTube
+# Tanári hálózat: magas prioritás
+/queue simple add name="Teacher Priority" target=192.168.88.0/24 max-limit=50M/50M priority=1
+
+# Diák hálózat: limitált, alacsonyabb prioritás
+/queue simple add name="Student Limit" target=192.168.90.0/24 max-limit=20M/20M priority=8
+
+# Kiemelt oldalak (Wikipedia, EduPage) - magasabb prioritás diákoknál is
+/ip firewall address-list add address=wikipedia.org list=edu-sites
+/ip firewall address-list add address=edupage.org list=edu-sites
+
+/queue simple add name="Student Edu Priority" target=192.168.90.0/24 dst-address-list=edu-sites max-limit=10M/10M priority=2
+
+# YouTube és egyéb nagy terhelés - alacsony prioritás diák hálózaton
+/ip firewall layer7-protocol add name=youtube regexp="youtube.com"
+/queue simple add name="Student YouTube Throttle" target=192.168.90.0/24 layer7-protocol=youtube max-limit=5M/5M priority=8
+
+# (Opcionális) Per-IP sávszél limit diákoknak
+:for i from=10 to=200 do={
+  /queue simple add name=("Student " . $i) target=("192.168.90." . $i) max-limit=2M/2M priority=8
+}
+
+# Végül: NAT beállítások (ha kell internet eléréshez)
+/ip firewall nat add chain=srcnat out-interface=ether1 action=masquerade
